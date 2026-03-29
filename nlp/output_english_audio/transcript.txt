@@ -1,0 +1,1 @@
+The patient's blood pressure is 120 over 80. Heart rate is 72 beats per minute. Temperature is 98.6 degrees Fahrenheit.

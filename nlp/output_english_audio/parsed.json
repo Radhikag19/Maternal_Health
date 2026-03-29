@@ -1,0 +1,40 @@
+{
+  "transcript": "The patient's blood pressure is 120 over 80. Heart rate is 72 beats per minute. Temperature is 98.6 degrees Fahrenheit.",
+  "transcription": {
+    "confidence": 0.877,
+    "language": "en",
+    "language_probability": 0.0,
+    "needs_review": false,
+    "error": null
+  },
+  "parsed": {
+    "fields": {
+      "systolic_bp": 120,
+      "diastolic_bp": 80,
+      "blood_sugar": null,
+      "body_temp": 98.6,
+      "bmi": null,
+      "heart_rate": 72,
+      "hemoglobin": null,
+      "spo2": null
+    },
+    "confidence": {
+      "systolic_bp": "ok",
+      "diastolic_bp": "ok",
+      "blood_sugar": "missing",
+      "body_temp": "ok",
+      "bmi": "missing",
+      "heart_rate": "ok",
+      "hemoglobin": "missing",
+      "spo2": "missing"
+    },
+    "uncertain_fields": [],
+    "missing_fields": [
+      "blood_sugar",
+      "bmi",
+      "hemoglobin",
+      "spo2"
+    ]
+  },
+  "pipeline_needs_review": true
+}

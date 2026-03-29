@@ -1,0 +1,35 @@
+{
+  "transcript": "Blood pressure 130 over 85. Blood sugar 120. Body temperature 98.6. BMI 24. Heart rate 80. Heme Globin 12. Oxygen level 98.",
+  "transcription": {
+    "confidence": 0.754,
+    "language": "en",
+    "language_probability": 0.0,
+    "needs_review": false,
+    "error": null
+  },
+  "parsed": {
+    "fields": {
+      "systolic_bp": 130,
+      "diastolic_bp": 85,
+      "blood_sugar": 120,
+      "body_temp": 98.6,
+      "bmi": 24,
+      "heart_rate": 80,
+      "hemoglobin": 12,
+      "spo2": 98
+    },
+    "confidence": {
+      "systolic_bp": "ok",
+      "diastolic_bp": "ok",
+      "blood_sugar": "ok",
+      "body_temp": "ok",
+      "bmi": "ok",
+      "heart_rate": "ok",
+      "hemoglobin": "ok",
+      "spo2": "ok"
+    },
+    "uncertain_fields": [],
+    "missing_fields": []
+  },
+  "pipeline_needs_review": false
+}

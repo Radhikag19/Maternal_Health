@@ -1,0 +1,44 @@
+{
+  "transcript": "बवन लगटी इस कर आबाला एकसो बीस हैं उनच्ये वाला एकसी हैं दिल की दधकन बहईतर हैं तापमन अथान भी तशमला हो चेर डिगरी हैं शुभर एकसो ती से हैं हीमो गलोबें दस्ट शमला हो पाच हैं ती आई माई एकी से हैं अख्सिजन लेवल निन्यान भी प्रतिषत हैं",
+  "transcription": {
+    "confidence": 0.634,
+    "language": "hi",
+    "language_probability": 1.0,
+    "needs_review": false,
+    "error": null
+  },
+  "parsed": {
+    "fields": {
+      "systolic_bp": null,
+      "diastolic_bp": null,
+      "blood_sugar": null,
+      "body_temp": null,
+      "bmi": null,
+      "heart_rate": null,
+      "hemoglobin": null,
+      "spo2": null
+    },
+    "confidence": {
+      "systolic_bp": "missing",
+      "diastolic_bp": "missing",
+      "blood_sugar": "missing",
+      "body_temp": "missing",
+      "bmi": "missing",
+      "heart_rate": "missing",
+      "hemoglobin": "missing",
+      "spo2": "missing"
+    },
+    "uncertain_fields": [],
+    "missing_fields": [
+      "systolic_bp",
+      "diastolic_bp",
+      "blood_sugar",
+      "body_temp",
+      "bmi",
+      "heart_rate",
+      "hemoglobin",
+      "spo2"
+    ]
+  },
+  "pipeline_needs_review": true
+}

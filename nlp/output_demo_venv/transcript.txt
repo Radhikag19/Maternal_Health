@@ -1,0 +1,1 @@
+blood pressure 130 over 85 blood sugar 120 body temperature 98.6 bmi 24 heart rate 80 hemoglobin 12 oxygen level 98

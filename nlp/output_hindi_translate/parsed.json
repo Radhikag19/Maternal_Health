@@ -1,0 +1,40 @@
+{
+  "transcript": "1. The blood pressure of the patient is 120 and the lower part is 80. 2. The heart rate is 72. The temperature is 88.6 degrees. 3. The sugar is 130. The hemoglobin is 10.5 degrees. 4. The BMI is 21. The oxygen level is in the blood pressure.",
+  "transcription": {
+    "confidence": 0.706,
+    "language": "hi",
+    "language_probability": 1.0,
+    "needs_review": false,
+    "error": null
+  },
+  "parsed": {
+    "fields": {
+      "systolic_bp": null,
+      "diastolic_bp": 80,
+      "blood_sugar": 130,
+      "body_temp": 88.6,
+      "bmi": 21,
+      "heart_rate": 72,
+      "hemoglobin": 10.5,
+      "spo2": null
+    },
+    "confidence": {
+      "systolic_bp": "missing",
+      "diastolic_bp": "ok",
+      "blood_sugar": "ok",
+      "body_temp": "uncertain",
+      "bmi": "ok",
+      "heart_rate": "ok",
+      "hemoglobin": "ok",
+      "spo2": "missing"
+    },
+    "uncertain_fields": [
+      "body_temp"
+    ],
+    "missing_fields": [
+      "systolic_bp",
+      "spo2"
+    ]
+  },
+  "pipeline_needs_review": true
+}

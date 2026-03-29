@@ -41,6 +41,17 @@ tens_map = {
 }
 hundred_map = {"sau": 100}
 
+DEVANAGARI_DIGITS = {
+    "०": "0", "१": "1", "२": "2", "३": "3", "४": "4",
+    "५": "5", "६": "6", "७": "7", "८": "8", "९": "9",
+}
+
+
+def normalize_text(text: str) -> str:
+    for devanagari_digit, ascii_digit in DEVANAGARI_DIGITS.items():
+        text = text.replace(devanagari_digit, ascii_digit)
+    return text
+
 
 def hindi_phrase_to_number(phrase: str) -> Optional[int]:
     words = phrase.lower().strip().split()
@@ -97,7 +108,7 @@ def extract_health_data(text: str) -> ParseResult:
 
     Returns ParseResult.  Use .flat() for backwards-compatible dict access.
     """
-    text = text.lower()
+    text = normalize_text(text.lower())
 
     # ── Synonym normalisation (original mappings preserved + new additions) ──
     replacements = {
@@ -110,42 +121,57 @@ def extract_health_data(text: str) -> ParseResult:
         # Blood pressure
         "rakt chaap": "blood pressure", "bp": "blood pressure",
         "blood pressure": "blood pressure",
+        "रक्तचाप": "blood pressure", "ब्लड प्रेशर": "blood pressure",
+        "रक्त चाप": "blood pressure",
 
         # Heart rate
         "dil ki dhadkan": "heart rate", "dhadkan": "heart rate",
         "nabz": "heart rate", "pulse": "heart rate", "heartbeat": "heart rate",
+        "दिल की धड़कन": "heart rate", "दिल की धड़कनें": "heart rate",
+        "हार्ट रेट": "heart rate", "नब्ज": "heart rate",
 
         # Body temperature
         "bukhar": "body temperature", "tapmaan": "body temperature",
         "taapmaan": "body temperature", "tapman": "body temperature",
         "temperature": "body temperature",
+        "तापमान": "body temperature", "बुखार": "body temperature",
+        "टेम्परेचर": "body temperature", "शरीर का तापमान": "body temperature",
 
         # Blood sugar
         "cheeni": "blood sugar", "sugar": "blood sugar",
         "sugar level": "blood sugar", "blood sugar": "blood sugar",
         "sugar test": "blood sugar",
+        "ब्लड शुगर": "blood sugar", "शुगर": "blood sugar",
+        "चीनी": "blood sugar", "शुगर लेवल": "blood sugar",
 
         # BMI
         "weight": "bmi", "weight ratio": "bmi",
         "height weight": "bmi", "bmi": "bmi",
+        "बीएमआई": "bmi",
 
         # ── NEW: Hemoglobin ──────────────────────────────────────────────
         "khoon ki kami": "hemoglobin", "hemoglobin": "hemoglobin",
+        "heme globin": "hemoglobin", "hem globin": "hemoglobin",
         "haemoglobin": "hemoglobin",  "hb": "hemoglobin",
         "hgb": "hemoglobin", "blood count": "hemoglobin",
         "khoon": "hemoglobin",
+        "हीमोग्लोबिन": "hemoglobin", "हीमोग्लोबिन स्तर": "hemoglobin",
+        "खून की कमी": "hemoglobin",
 
         # ── NEW: SpO2 / Oxygen saturation ────────────────────────────────
         "oxygen level": "spo2", "oxygen saturation": "spo2",
         "spo2": "spo2", "o2 level": "spo2", "o2": "spo2",
         "pulse oximeter": "spo2", "pran vayu": "spo2",
         "oxygen": "spo2",
+        "ऑक्सीजन लेवल": "spo2", "ऑक्सीजन सैचुरेशन": "spo2",
+        "ऑक्सीजन": "spo2",
     }
 
     for hin, eng in replacements.items():
         text = text.replace(hin, eng)
 
     text = text.replace("over", "/").replace("by", "/")
+    text = text.replace(" बाय ", " /")
 
     # ── Helper: validate against clinical range ──────────────────────────────
     def validate(field_name: str, value) -> str:
@@ -180,7 +206,7 @@ def extract_health_data(text: str) -> ParseResult:
     )
     if not bp_match:
         word_bp = re.search(
-            r"blood pressure[^\d]*([a-z\s\-]+)\s*/\s*([a-z\s\-]+)", text
+            r"blood pressure[^\d]*([a-z\u0900-\u097f\s\-]+)\s*/\s*([a-z\u0900-\u097f\s\-]+)", text
         )
         if word_bp:
             systolic  = words_to_number(word_bp.group(1).strip())
@@ -189,39 +215,61 @@ def extract_health_data(text: str) -> ParseResult:
         systolic, diastolic = bp_match.group(1), bp_match.group(2)
 
     if not systolic:
-        m = re.search(r"(systolic|upper)[^\d]*(\d{2,3}|[a-z\s\-]+)", text)
+        m = re.search(r"(systolic|upper)[^\d]*(\d{2,3}|[a-z\u0900-\u097f\s\-]+)", text)
         if m:
             v = m.group(2)
             systolic = v if v[0].isdigit() else words_to_number(v)
 
     if not diastolic:
-        m = re.search(r"(diastolic|lower)[^\d]*(\d{2,3}|[a-z\s\-]+)", text)
+        m = re.search(r"(diastolic|lower)[^\d]*(\d{2,3}|[a-z\u0900-\u097f\s\-]+)", text)
         if m:
             v = m.group(2)
             diastolic = v if v[0].isdigit() else words_to_number(v)
+
+    # Handle translated phrasing like:
+    # "blood pressure is above 120 and below 80"
+    if not systolic or not diastolic:
+        m = re.search(
+            r"blood pressure[^\d]*(?:is\s+)?(?:above|upper|higher)[^\d]*(\d{2,3})[^\d]+(?:and\s+)?(?:below|lower)[^\d]*(\d{2,3})",
+            text,
+        )
+        if m:
+            systolic = systolic or m.group(1)
+            diastolic = diastolic or m.group(2)
+
+    # Handle translated phrasing like:
+    # "upper part is 120 and lower part is 80"
+    if not systolic or not diastolic:
+        m = re.search(
+            r"(?:upper\s+part|upper\s+value)[^\d]*(\d{2,3})[^\d]+(?:lower\s+part|lower\s+value)[^\d]*(\d{2,3})",
+            text,
+        )
+        if m:
+            systolic = systolic or m.group(1)
+            diastolic = diastolic or m.group(2)
 
     # ── Extract all fields ───────────────────────────────────────────────────
     extracted = {
         "systolic_bp":  int(systolic)  if systolic  else None,
         "diastolic_bp": int(diastolic) if diastolic else None,
         "blood_sugar":  extract_pattern(
-            r"blood sugar[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"blood sugar[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
         "body_temp":    extract_pattern(
-            r"(?:body\s+temperature|body\s+temp|temperature|temp)[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"(?:body\s+temperature|body\s+temp|temperature|temp)[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
         "bmi":          extract_pattern(
-            r"bmi[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"bmi[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
         "heart_rate":   extract_pattern(
-            r"(?:heart rate)[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"(?:heart rate)[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
         # ── NEW fields ───────────────────────────────────────────────────
         "hemoglobin":   extract_pattern(
-            r"hemoglobin[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"hemoglobin[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
         "spo2":         extract_pattern(
-            r"spo2[^\d]*(\d+(?:\.\d+)?|[a-z\s\-]+)"
+            r"spo2[^\d]*(\d+(?:\.\d+)?|[a-z\u0900-\u097f\s\-]+)"
         ),
     }
 

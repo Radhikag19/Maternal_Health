@@ -1,0 +1,1 @@
+The patient's blood pressure is above 120 and below 80. Heartbeats are 72, temperature is 98.6 degrees. Sugar is 130, hemoglobin is 10.5, BMI is 21, oxygen level is 99 percent.

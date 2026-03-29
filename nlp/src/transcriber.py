@@ -39,8 +39,9 @@ class TranscriptionResult:
 
 def transcribe_audio(
     audio_path: str,
-    model_size: str = "small",
+    model_size: str = "medium",
     language: Optional[str] = None,
+    task: str = "translate",
 ) -> TranscriptionResult:
     """
     Transcribe an audio file and return a structured result with confidence.
@@ -54,6 +55,8 @@ def transcribe_audio(
         language   : ISO-639-1 code to force transcription language, e.g.
                      "hi" for Hindi.  Leave None to auto-detect — recommended
                      for field use where language may vary by region.
+        task       : "transcribe" to keep source language text,
+                 "translate" to output English translation.
 
     Returns:
         TranscriptionResult.  Always check .needs_review before using .text
@@ -71,6 +74,7 @@ def transcribe_audio(
         result = model.transcribe(
             audio_path,
             language=language,        # None triggers Whisper's auto-detection
+            task=task,
             verbose=False,
             word_timestamps=False,    # save memory on low-end devices
         )
