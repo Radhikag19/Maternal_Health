@@ -49,7 +49,9 @@ data class Vitals(
 
     @ColumnInfo(name = "heart_rate") val Heart_Rate: Float = 0f,
 
-    @ColumnInfo(name = "predicted_risk") val predictedRisk: Int = 0
+    @ColumnInfo(name = "predicted_risk") val predictedRisk: Int = 0,
+
+    @ColumnInfo(name = "predicted_risk_label") val predictedRiskLabel: String = ""
 
 
 )

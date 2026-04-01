@@ -11,29 +11,29 @@ It works fully offline on **low‑cost Android phones** and syncs when connectiv
 
 ## 🚀 Key Features
 
-| Category         | Feature                                              | Why It Matters |
-|------------------|------------------------------------------------------|----------------|
-| **Offline‑First** | Risk-scoring runs on device, no internet needed      | ASHA workers often work in low-connectivity regions |
-| **Hybrid Models**| Offline: Compact neural net<br>Online: XGBoost      | Combines speed + accuracy + explainability |
-| **Layered Risk Logic** | Two logistic-regression layers before the neural net | Transparent factor-wise scoring for ASHA workers |
-| **Modular & Extensible** | FL-ready via Flower templates | Future-proof, privacy-preserving updates |
-| **NLP Data Entry** | Extracts vitals like BP, HR, Sugar from ASHA voice notes | Speeds up data entry for low-literacy field workers |
-| **PHC Dashboard** | Streamlit-based geolocation dashboard with map, pie charts, reports, and analytics | Allows PHC staff to track block-wise risk and complaints |
+| Category                 | Feature                                                                            | Why It Matters                                           |
+| ------------------------ | ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Offline‑First**        | Risk-scoring runs on device, no internet needed                                    | ASHA workers often work in low-connectivity regions      |
+| **Hybrid Models**        | Offline: Compact neural net<br>Online: XGBoost                                     | Combines speed + accuracy + explainability               |
+| **Layered Risk Logic**   | Two logistic-regression layers before the neural net                               | Transparent factor-wise scoring for ASHA workers         |
+| **Modular & Extensible** | FL-ready via Flower templates                                                      | Future-proof, privacy-preserving updates                 |
+| **NLP Data Entry**       | Extracts vitals like BP, HR, Sugar from ASHA voice notes                           | Speeds up data entry for low-literacy field workers      |
+| **PHC Dashboard**        | Streamlit-based geolocation dashboard with map, pie charts, reports, and analytics | Allows PHC staff to track block-wise risk and complaints |
 
 ---
 
 ## 🧬 Input Features & Model Interpretation
 
-| Feature Abbr. | Full Name & Unit                         | Typical Range |
-|---------------|-------------------------------------------|----------------|
-| BMI           | Body Mass Index (kg/m²)                   | 16 – 40        |
-| BS            | Random Blood Sugar (mmol/L)               | 4–15           |
-| HR            | Heart Rate (beats/min)                    | 60–140         |
-| BT            | Body Temperature (°F)                     | 96–100         |
-| PrevComp      | Previous Pregnancy Complications (binary) | 0 / 1          |
-| PreDM         | Pre‑existing Diabetes (binary)            | 0 / 1          |
-| GDM           | Gestational Diabetes (binary)             | 0 / 1          |
-| MentHlth      | Mental‑Health Concerns (binary)           | 0 / 1          |
+| Feature Abbr. | Full Name & Unit                          | Typical Range |
+| ------------- | ----------------------------------------- | ------------- |
+| BMI           | Body Mass Index (kg/m²)                   | 16 – 40       |
+| BS            | Random Blood Sugar (mmol/L)               | 4–15          |
+| HR            | Heart Rate (beats/min)                    | 60–140        |
+| BT            | Body Temperature (°F)                     | 96–100        |
+| PrevComp      | Previous Pregnancy Complications (binary) | 0 / 1         |
+| PreDM         | Pre‑existing Diabetes (binary)            | 0 / 1         |
+| GDM           | Gestational Diabetes (binary)             | 0 / 1         |
+| MentHlth      | Mental‑Health Concerns (binary)           | 0 / 1         |
 
 ---
 
@@ -48,12 +48,14 @@ Inputs: `HR`, `BT`, `BS`, `BMI` → Output: **Score B**
 **LR‑C (Meta Layer)**  
 Inputs: `Score A`, `Score B` → Output: **Final Risk Score (0–1)**
 
-**Offline Neural Net**  
+**Offline Neural Net**
+
 - `Input(2)` → Dense(16, ReLU) → Dense(8, ReLU) → Dense(1, Sigmoid)
 - Refines Score using non-linear field data patterns
 
-**Online Model (XGBoost)**  
-- Same inputs, synced when internet returns  
+**Online Model (XGBoost)**
+
+- Same inputs, synced when internet returns
 - Used for dashboard analytics & deeper predictions
 
 ---
@@ -95,11 +97,11 @@ Built with **Streamlit**, the dashboard provides:
 
 ## 👥 Core Contributors
 
-| Name | Role |
-|------|------|
-| **Arindol Sarkar** | ML Pipeline + Risk Scoring Models |
-| **Atul Gadkoti** | Android App + Offline Sync |
-| **Ishita Singh** | Web Dashboard + Geolocation Visualization + NLP Integration |
+| Name               | Role                                                        |
+| ------------------ | ----------------------------------------------------------- |
+| **Arindol Sarkar** | ML Pipeline + Risk Scoring Models                           |
+| **Atul Gadkoti**   | Android App + Offline Sync                                  |
+| **Ishita Singh**   | Web Dashboard + Geolocation Visualization + NLP Integration |
 
 We welcome collaborations in **clinical validation, federated learning, and dataset curation**.
 
@@ -107,13 +109,13 @@ We welcome collaborations in **clinical validation, federated learning, and data
 
 ## 📦 Tech Stack
 
-| Layer      | Technology |
-|------------|------------|
-| **App**    | Kotlin + TFLite |
-| **Server** | FastAPI |
-| **ML**     | TensorFlow, scikit-learn, XGBoost |
-| **Dashboard** | Streamlit, Plotly, Folium |
-| **FL-ready** | Flower (client + server templates, in progress) |
+| Layer         | Technology                                      |
+| ------------- | ----------------------------------------------- |
+| **App**       | Kotlin + TFLite                                 |
+| **Server**    | FastAPI                                         |
+| **ML**        | TensorFlow, scikit-learn, XGBoost               |
+| **Dashboard** | Streamlit, Plotly, Folium                       |
+| **FL-ready**  | Flower (client + server templates, in progress) |
 
 ---
 
@@ -140,10 +142,11 @@ cd ml_models && jupyter notebook
 # Launch Dashboard
 streamlit run dashboard/app.py
 ```
+
 ---
 
-
 ## 🤝 Want to Collaborate?
+
 Open an issue, start a discussion, or email 24cd3007@rgipt.ac.in
 We’re especially keen on:
 

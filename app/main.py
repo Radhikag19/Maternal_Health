@@ -5,6 +5,13 @@ import joblib
 import pandas as pd
 
 
+# Update these labels if your training label encoding changes.
+RISK_LABELS = {
+    0: "Low Risk",
+    1: "High Risk",
+}
+
+
 try:
     model = joblib.load("app/model.pkl")
 except FileNotFoundError:
@@ -49,4 +56,10 @@ async def predict(data: Union[PatientParams, List[PatientParams]]):
     df = df.fillna(-999)
     X = pd.concat([df,missing_flags], axis=1)
     prediction = model.predict(X)
-    return {"prediction": prediction.tolist()}
+    prediction_list = prediction.tolist()
+    prediction_labels = [RISK_LABELS.get(int(value), "Unknown") for value in prediction_list]
+
+    return {
+        "prediction": prediction_list,
+        "prediction_label": prediction_labels,
+    }

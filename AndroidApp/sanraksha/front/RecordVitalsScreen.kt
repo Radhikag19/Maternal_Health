@@ -3,6 +3,7 @@ package com.example.sanraksha.front
 import android.app.DatePickerDialog
 import android.util.Log
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.room.util.splitToIntList
 import com.example.sanraksha.AndroidConnectivityObserver
+import com.example.sanraksha.ApiPredictionResult
 import com.example.sanraksha.ConnectivityVIewModel
 import com.example.sanraksha.DataStandardization
 import com.example.sanraksha.HealthViewModel
@@ -240,9 +242,11 @@ fun RecordVitalsScreen(
                             Heart_Rate = heartRate.toFloatOrNull()
 
                         )
-                        healthViewModel.sendHealthDataToApi(input){prediction->
-                            if(prediction != null){
-                                Log.d("APIPrediction","Predicted Risk Score : $prediction")
+                        healthViewModel.sendHealthDataToApi(input){result: ApiPredictionResult?->
+                            if(result != null){
+                                Log.d("APIPrediction","Predicted Risk Score : ${result.prediction}")
+                                Log.d("APIPrediction","Predicted Risk Label : ${result.label}")
+                                Toast.makeText(context, "Predicted Risk: ${result.label}", Toast.LENGTH_SHORT).show()
                                 val vitals = Vitals(
                                     patientId = patientId,
                                     date = date,
@@ -257,7 +261,8 @@ fun RecordVitalsScreen(
                                     Preexisting_Diabetes = preexistingDiabetes ?: 0,
                                     Gestational_Diabetes = gestationalDiabetes ?: 0,
                                     Mental_Health = mentalHealth ?: 0,
-                                    predictedRisk = prediction
+                                    predictedRisk = result.prediction,
+                                    predictedRiskLabel = result.label
                                 )
                                 Log.d("InsertVitals", "Calling insert for patientId = ${vitals.patientId}")
 
@@ -327,6 +332,7 @@ fun RecordVitalsScreen(
                             Gestational_Diabetes = gestationalDiabetes ?: 0,
                             Mental_Health = mentalHealth ?: 0,
                             predictedRisk = intPrediction,
+                            predictedRiskLabel = if (intPrediction == 1) "High Risk" else "Low Risk",
                         )
 
                           vitalsViewModel.insertVitals(vitals)

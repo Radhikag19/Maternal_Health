@@ -115,9 +115,16 @@ fun ProfileScreen(patientId:Long,
 
             item {
                 if (vitalsList.isNotEmpty()) {
-                    val latestRisk = vitalsList.last().predictedRisk
+                    val latestVitals = vitalsList.last()
+                    val latestRisk = latestVitals.predictedRisk
                     Log.d("latestRisk","$latestRisk")
-                    val riskText = if (latestRisk == 1) "High Risk" else "Low Risk"
+                    val riskText = if (latestVitals.predictedRiskLabel.isNotBlank()) {
+                        latestVitals.predictedRiskLabel
+                    } else if (latestRisk == 1) {
+                        "High Risk"
+                    } else {
+                        "Low Risk"
+                    }
                     val riskColor = if (latestRisk == 1) Color.Red else Color(0xFF4CAF50)
 
                     Card(
