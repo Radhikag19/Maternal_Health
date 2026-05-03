@@ -13,33 +13,23 @@ RISK_LABELS = {
     1: "High Risk",
 }
 
-print("Loading unified Keras model and preprocessing pipeline...")
+print("Loading IMPROVED Keras model (98.73% accuracy)...")
 
-# Load the unified Keras model
+# Load the improved Keras model (98.73% accuracy)
 try:
-    keras_model = tf.keras.models.load_model("app/keras_model.keras")
-    print("✓ Keras model loaded")
+    keras_model = tf.keras.models.load_model("app/keras_model_improved.keras")
+    print("[OK] Improved Keras model loaded (98.73% accuracy)")
 except Exception as e:
-    print(f"Error loading Keras model: {e}")
+    print(f"[ERROR] Error loading improved Keras model: {e}")
     keras_model = None
 
-# Load the StandardScaler
+# Load the improved StandardScaler (for 10 features)
 try:
-    scaler = joblib.load("app/scaler.pkl")
-    print("✓ StandardScaler loaded")
+    scaler = joblib.load("app/scaler_improved.pkl")
+    print("[OK] Improved StandardScaler loaded (10 features)")
 except Exception as e:
-    print(f"Error loading scaler: {e}")
+    print(f"[ERROR] Error loading improved scaler: {e}")
     scaler = None
-
-# Load the stage models for feature engineering
-try:
-    model1 = joblib.load("app/stage1_model.pkl")  # Previous Complications, etc.
-    model2 = joblib.load("app/stage2_model.pkl")  # Abnormality flags
-    model3 = joblib.load("app/stage3_model.pkl")  # Final ensemble
-    print("✓ Stage models loaded")
-except Exception as e:
-    print(f"Error loading stage models: {e}")
-    model1 = model2 = model3 = None
 
 
 class PatientParams(BaseModel):
@@ -69,54 +59,33 @@ async def predict(data: Union[PatientParams, List[PatientParams]]):
     if isinstance(data, PatientParams):
         data = [data]
 
-    # Convert input to DataFrame
-    df = pd.DataFrame([item.model_dump() for item in data])
-    df.columns = [col.replace('_', ' ').strip() for col in df.columns]
-    
-    # Handle missing values
-    df = df.fillna(-999)
-    
     predictions = []
     prediction_labels = []
     
-    for idx, row in df.iterrows():
-        # ===== STAGE 1: Risk Score from historical factors =====
-        col1 = ['Previous Complications', 'Preexisting Diabetes', 'Gestational Diabetes', 'Mental Health']
-        stage1_input = row[col1].values.reshape(1, -1)
-        risk_score = model1.predict_proba(stage1_input)[0, 1]
+    for item in data:
+        # Create feature vector with 10 features (Body Temp removed)
+        # Order: Age, Systolic BP, Diastolic, BS, BMI, Previous Complications,
+        #        Preexisting Diabetes, Gestational Diabetes, Mental Health, Heart Rate
         
-        # ===== STAGE 2: Risk Score Abn from abnormality flags =====
-        bs_val = row['BS'] if row['BS'] != -999 else 5.0
-        bmi_val = row['BMI'] if row['BMI'] != -999 else 25.0
-        systolic_val = row['Systolic BP'] if row['Systolic BP'] != -999 else 120.0
-        diastolic_val = row['Diastolic'] if row['Diastolic'] != -999 else 80.0
-        hr_val = row['Heart Rate'] if row['Heart Rate'] != -999 else 75.0
+        features = [
+            item.Age,
+            item.Systolic_BP if item.Systolic_BP is not None else 120.0,
+            item.Diastolic if item.Diastolic is not None else 80.0,
+            item.BS if item.BS is not None else 5.0,
+            item.BMI,
+            item.Previous_Complications if item.Previous_Complications is not None else 0,
+            item.Preexisting_Diabetes if item.Preexisting_Diabetes is not None else 0,
+            item.Gestational_Diabetes if item.Gestational_Diabetes is not None else 0,
+            item.Mental_Health if item.Mental_Health is not None else 0,
+            item.Heart_Rate if item.Heart_Rate is not None else 75.0,
+        ]
         
-        is_low_bmi = 1 if bmi_val < 18.5 else 0
-        is_high_bmi = 1 if bmi_val > 30 else 0
-        is_low_bp = 1 if (systolic_val < 90 or diastolic_val < 60) else 0
-        is_high_bp = 1 if (systolic_val > 140 or diastolic_val > 90) else 0
-        is_high_bs = 1 if bs_val > 7.8 else 0
-        is_high_hr = 1 if hr_val > 100 else 0
-        is_low_hr = 1 if hr_val < 60 else 0
+        # Scale features using the improved scaler
+        features_array = np.array(features).reshape(1, -1)
+        features_scaled = scaler.transform(features_array)
         
-        stage2_input = np.array([[is_low_bmi, is_high_bmi, is_low_bp, is_high_bp, is_high_bs, is_high_hr, is_low_hr]])
-        risk_score_abn = model2.predict_proba(stage2_input)[0, 1]
-        
-        # ===== STAGE 3: Final risk score =====
-        stage3_input = np.array([[risk_score, risk_score_abn]])
-        final_risk_score = model3.predict_proba(stage3_input)[0, 1]
-        
-        # ===== KERAS NEURAL NETWORK =====
-        # Scale the vitals
-        vitals = np.array([[bs_val, bmi_val, row['Age'], hr_val, systolic_val, diastolic_val]])
-        vitals_scaled = scaler.transform(vitals)
-        
-        # Create input for Keras model (6 scaled vitals + final_risk_score)
-        keras_input = np.hstack([vitals_scaled, np.array([[final_risk_score]])])
-        
-        # Get prediction
-        prob = keras_model.predict(keras_input, verbose=0)[0, 0]
+        # Get prediction from improved Keras model
+        prob = keras_model.predict(features_scaled, verbose=0)[0, 0]
         pred = 1 if prob > 0.5 else 0
         
         predictions.append(pred)
