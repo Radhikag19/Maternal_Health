@@ -15,7 +15,7 @@ class RiskPredictor(private val context : Context){
     }
 
     private fun loadModelFile(context: Context): MappedByteBuffer {
-        val fileDescriptor = context.assets.openFd("finalmodel.tflite")
+        val fileDescriptor = context.assets.openFd("finalmodel_improved.tflite")
         val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
         val fileChannel = inputStream.channel
         val startOffset = fileDescriptor.startOffset
@@ -24,7 +24,7 @@ class RiskPredictor(private val context : Context){
     }
 
     fun predict(inputData : FloatArray):Float {
-        val input = arrayOf(inputData) //shape:[1][7]
+        val input = arrayOf(inputData) //shape:[1][10] for improved model
         val output = Array(1){FloatArray(1)} // shape : [1][1]
 
         interpreter?.run(input,output)

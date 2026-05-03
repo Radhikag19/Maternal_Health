@@ -301,16 +301,8 @@ fun RecordVitalsScreen(
                             Mental_Health = mentalHealth ?: 0,
                             Heart_Rate = heartRate.toFloatOrNull()?.toInt()?:0
                         )
-                        val standardizedInput = DataStandardization(input)
-                        val inputforMlModel = floatArrayOf(
-                    standardizedInput.BS.toFloat(),
-                    standardizedInput.BMI.toFloat(),
-                    standardizedInput.Age.toFloat(),
-                    standardizedInput.HeartRate.toFloat(),
-                    standardizedInput.SystolicBP.toFloat(),
-                    standardizedInput.DiastolicBP.toFloat(),
-                    standardizedInput.FinalRiskScore.toFloat()
-                    )
+                        // Use improved model (98.73% accuracy)
+                        val inputforMlModel = ImprovedDataStandardization(input)
                         val predictor = RiskPredictor(context)
                         val prediction = predictor.predict(inputforMlModel)
                         val intPrediction = if(prediction > 0.5f)1 else 0

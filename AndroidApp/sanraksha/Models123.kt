@@ -116,3 +116,60 @@ fun DataStandardization(riskInput: riskInput):StandardizedOutput{
 fun sigmoid(x: Double): Double {
     return 1.0 / (1.0 + exp(-x))
 }
+
+// ===== IMPROVED MODEL (98.73% accuracy) =====
+// Simplified preprocessing: 10 features directly with StandardScaler
+fun ImprovedDataStandardization(riskInput: riskInput): FloatArray {
+    // Feature order: Age, Systolic BP, Diastolic, BS, BMI,
+    //               Previous Complications, Preexisting Diabetes,
+    //               Gestational Diabetes, Mental Health, Heart Rate
+    
+    // StandardScaler parameters (mean and std from training)
+    val means = floatArrayOf(
+        27.635692f,  // Age
+        116.880676f, // Systolic BP
+        77.0f,       // Diastolic
+        7.555998f,   // BS
+        23.451214f,  // BMI
+        0.173178f,   // Previous Complications
+        0.289335f,   // Preexisting Diabetes
+        0.117212f,   // Gestational Diabetes
+        0.334741f,   // Mental Health
+        75.617740f   // Heart Rate
+    )
+    
+    val stds = floatArrayOf(
+        9.287461f,   // Age
+        18.600834f,  // Systolic BP
+        14.233755f,  // Diastolic
+        3.112228f,   // BS
+        3.886886f,   // BMI
+        0.378401f,   // Previous Complications
+        0.453454f,   // Preexisting Diabetes
+        0.321673f,   // Gestational Diabetes
+        0.471900f,   // Mental Health
+        7.234759f    // Heart Rate
+    )
+    
+    // Create raw feature vector (10 features)
+    val rawFeatures = floatArrayOf(
+        riskInput.Age.toFloat(),
+        riskInput.Systolic_BP,
+        riskInput.Diastolic,
+        riskInput.BS,
+        riskInput.BMI,
+        riskInput.Previous_Complications.toFloat(),
+        riskInput.Preexisting_Diabetes.toFloat(),
+        riskInput.Gestational_Diabetes.toFloat(),
+        riskInput.Mental_Health.toFloat(),
+        riskInput.Heart_Rate.toFloat()
+    )
+    
+    // Apply StandardScaler: (x - mean) / std
+    val scaledFeatures = FloatArray(10)
+    for (i in 0 until 10) {
+        scaledFeatures[i] = (rawFeatures[i] - means[i]) / stds[i]
+    }
+    
+    return scaledFeatures
+}
