@@ -1,9 +1,9 @@
 {
   "transcript": "The patient's blood pressure is 120 over 80. Heart rate is 72 beats per minute. Temperature is 98.6 degrees Fahrenheit.",
   "transcription": {
-    "confidence": 0.879,
+    "confidence": 0.902,
     "language": "en",
-    "language_probability": 0.0,
+    "language_probability": 1.0,
     "needs_review": false,
     "error": null
   },

@@ -17,12 +17,12 @@ import kotlin.math.exp
 fun DataStandardization(riskInput: riskInput):StandardizedOutput{
 
     //model1
-    val weight1ofmodel1 = 2.2844805234162426
-    val weight2ofmodel1 = 4.302126981282638
-    val weight3ofmodel1 = 4.80806462798848
-    val weight4ofmodel1 = 2.1557354423347066
+    val weight1ofmodel1 = -2.3618839494751795
+    val weight2ofmodel1 = -4.10436327362052
+    val weight3ofmodel1 = -4.7575702806286815
+    val weight4ofmodel1 = -2.0561135304354563
 
-    val biasingofmodel1 = -3.3629417153571874
+    val biasingofmodel1 = 3.3894794466732603
 
     //col1 = ['Previous Complications','Preexisting Diabetes','Gestational Diabetes','Mental Health']
     val model1result = weight1ofmodel1*riskInput.Previous_Complications +
@@ -51,15 +51,15 @@ fun DataStandardization(riskInput: riskInput):StandardizedOutput{
     val is_high_hr = if(riskInput.Heart_Rate >= 100)1 else 0
     val is_low_hr = if(riskInput.Heart_Rate <= 60)1 else 0
 
-    val weight1ofmodel2 = 2.9534001075263436
-    val weight2ofmodel2 = 2.541888001487591
-    val weight3ofmodel2 = -0.1546863106840409
-    val weight4ofmodel2 = 1.288581542577755
-    val weight5ofmodel2 = 4.129221296613417
+    val weight1ofmodel2 = -3.0585747061010173
+    val weight2ofmodel2 = -2.5008934783065744
+    val weight3ofmodel2 = 0.23212516267988542
+    val weight4ofmodel2 = -1.397350083593462
+    val weight5ofmodel2 = -4.082720266366235
     val weight6ofmodel2 = 0.0
-    val weight7ofmodel2 = 1.274482764741299
+    val weight7ofmodel2 = -1.2991199093290822
 
-    val biasingofmodel2 = -1.7934540919858957
+    val biasingofmodel2 = 1.8588124199686031
 
     val model2result = weight1ofmodel2*is_low_bmi + weight2ofmodel2*is_high_bmi +
                        weight3ofmodel2*is_low_bp + weight4ofmodel2*is_high_bp +
@@ -70,10 +70,10 @@ fun DataStandardization(riskInput: riskInput):StandardizedOutput{
 
     //model3
     //['Risk Score','Risk Score Abn']
-    val weight1ofmodel3 = 6.011838573897318
-    val weight2ofmodel3 = 3.571762088775957
+    val weight1ofmodel3 = 5.8991195017033
+    val weight2ofmodel3 = 3.7204274021730193
 
-    val biasingofmodel3 = -4.352072036198044
+    val biasingofmodel3 = -5.215292748027206
 
     val model3result = weight1ofmodel3*riskScore + weight2ofmodel3*riskScore_Abn + biasingofmodel3
 
@@ -92,12 +92,12 @@ fun DataStandardization(riskInput: riskInput):StandardizedOutput{
     // (x - mean)/standard deviation
 
 
-    val  standard_BS = (riskInput.BS - 7.47609921082299)/3.029857870760345
-    val  standard_BMI = (riskInput.BMI - 23.3991312967708 )/3.795296658503613
-    val  standard_Age = (riskInput.Age -  27.067643742953777)/8.946034682534425
-    val  standard_heart_rate = (riskInput.Heart_Rate - 75.87260428410372)/7.2294391475673185
-    val  standard_Systolic_BP = (riskInput.Systolic_BP - 116.61104847801579)/18.416513216607225
-    val standard_Diastolic_BP = (riskInput.Diastolic - 77.07215332581737 )/14.206847544098215
+    val  standard_BS = (riskInput.BS - 7.545174234424499)/3.0659491152062732
+    val  standard_BMI = (riskInput.BMI - 23.34221748400853 )/3.943820324272148
+    val  standard_Age = (riskInput.Age -  27.543822597676876)/9.128146207241514
+    val  standard_heart_rate = (riskInput.Heart_Rate - 75.7233368532207)/7.331602210795604
+    val  standard_Systolic_BP = (riskInput.Systolic_BP - 117.00530222693531)/18.550637856619645
+    val standard_Diastolic_BP = (riskInput.Diastolic - 77.25079365079365 )/14.15460969297969
 
     return StandardizedOutput(
         BS = standard_BS,
