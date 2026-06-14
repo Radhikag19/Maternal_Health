@@ -1,6 +1,7 @@
 package com.example.sanraksha
 
 import android.os.Bundle
+import android.Manifest
 import android.security.identity.AccessControlProfileId
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -23,6 +24,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Request permissions
+        requestPermissions()
+        
         setContent {
             SanrakshaTheme {
                     // ApiTestScreen()
@@ -76,5 +81,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    
+    private fun requestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_NETWORK_STATE
+        )
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            requestPermissions(permissions, 100)
+        }
+    }
 }
-

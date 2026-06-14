@@ -9,6 +9,7 @@
 ## Summary
 
 Updated Android app offline inference to use the **improved deep Keras neural network** with **98.73% accuracy**. The app now:
+
 - ✅ Loads `finalmodel_improved.tflite` instead of old `finalmodel.tflite`
 - ✅ Processes 10 features directly (Age, BP, BS, BMI, Diabetes flags, Mental Health, HR)
 - ✅ Applies StandardScaler preprocessing matching backend exactly
@@ -40,6 +41,7 @@ val fileDescriptor = context.assets.openFd("finalmodel_improved.tflite")
 **Added New Function**: `ImprovedDataStandardization(riskInput): FloatArray`
 
 **Feature Order** (10 features):
+
 ```
 0. Age
 1. Systolic BP
@@ -54,18 +56,20 @@ val fileDescriptor = context.assets.openFd("finalmodel_improved.tflite")
 ```
 
 **StandardScaler Parameters**:
+
 ```
 Means: [27.636, 116.881, 77.0, 7.556, 23.451, 0.173, 0.289, 0.117, 0.335, 75.618]
 Stds:  [9.287, 18.601, 14.234, 3.112, 3.887, 0.378, 0.453, 0.322, 0.472, 7.235]
 ```
 
 **Implementation**:
+
 ```kotlin
 fun ImprovedDataStandardization(riskInput: riskInput): FloatArray {
     // StandardScaler means and stds (extracted from training)
     val means = floatArrayOf(27.636..., 116.881..., ...)
     val stds = floatArrayOf(9.287..., 18.601..., ...)
-    
+
     // Create 10-feature raw vector
     val rawFeatures = floatArrayOf(
         riskInput.Age.toFloat(),
@@ -79,7 +83,7 @@ fun ImprovedDataStandardization(riskInput: riskInput): FloatArray {
         riskInput.Mental_Health.toFloat(),
         riskInput.Heart_Rate.toFloat()
     )
-    
+
     // Apply standardization: (x - mean) / std
     val scaledFeatures = FloatArray(10)
     for (i in 0 until 10) {
@@ -90,11 +94,13 @@ fun ImprovedDataStandardization(riskInput: riskInput): FloatArray {
 ```
 
 **Old Model Preprocessing** (Removed from prediction path):
+
 - 3-stage LogisticRegression pipeline
 - 7 features for Keras input
 - ~59% accuracy
 
 **New Model Preprocessing** (Simplified):
+
 - Direct StandardScaler on 10 features
 - Clean, maintainable code
 - 98.73% accuracy
@@ -124,6 +130,7 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ```
 
 **Benefits**:
+
 - ✅ Simpler, more readable code
 - ✅ Faster preprocessing (no 3-stage pipeline)
 - ✅ **98.73% accuracy** (vs 59.07% old)
@@ -135,15 +142,15 @@ val inputforMlModel = ImprovedDataStandardization(input)
 
 ### Online (Backend) ↔ Offline (Android) Parity
 
-| Aspect | Online | Offline | Match |
-|--------|--------|---------|-------|
-| **Model Type** | Keras NN | Keras NN (TFLite) | ✅ |
-| **Architecture** | Dense 64→32→16→8→1 | Same | ✅ |
-| **Features** | 10 raw inputs | 10 raw inputs | ✅ |
-| **Preprocessing** | StandardScaler | StandardScaler (same params) | ✅ |
-| **Input Order** | Age, BP, BS, BMI, flags, HR | Same order | ✅ |
-| **Accuracy** | 98.73% | 98.73%* | ✅ |
-| **Predictions** | Deterministic | Deterministic | ✅ |
+| Aspect            | Online                      | Offline                      | Match |
+| ----------------- | --------------------------- | ---------------------------- | ----- |
+| **Model Type**    | Keras NN                    | Keras NN (TFLite)            | ✅    |
+| **Architecture**  | Dense 64→32→16→8→1          | Same                         | ✅    |
+| **Features**      | 10 raw inputs               | 10 raw inputs                | ✅    |
+| **Preprocessing** | StandardScaler              | StandardScaler (same params) | ✅    |
+| **Input Order**   | Age, BP, BS, BMI, flags, HR | Same order                   | ✅    |
+| **Accuracy**      | 98.73%                      | 98.73%\*                     | ✅    |
+| **Predictions**   | Deterministic               | Deterministic                | ✅    |
 
 \*After rebuilding Android with updated TFLite and code
 
@@ -152,6 +159,7 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ## Testing Instructions
 
 ### 1. Build & Deploy
+
 ```
 1. Copy finalmodel_improved.tflite to AndroidApp/sanraksha/assets/
 2. Update Android project (IntelliJ/Android Studio)
@@ -160,6 +168,7 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ```
 
 ### 2. Test Offline Prediction
+
 ```
 1. Open app in offline mode (disable WiFi)
 2. Record vitals for a patient:
@@ -172,6 +181,7 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ```
 
 ### 3. Compare with Backend
+
 ```
 1. Enable online mode
 2. Use same patient data
@@ -184,6 +194,7 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ## Input Validation
 
 **Feature Range Expected**:
+
 - Age: 18-50 (years)
 - Systolic BP: 80-180 (mmHg)
 - Diastolic: 40-120 (mmHg)
@@ -197,11 +208,13 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ## Backward Compatibility
 
 ### Old Model Still Available
+
 - Original `DataStandardization()` function **not removed**
 - Can revert by uncommenting old prediction logic
 - Useful for testing/comparison
 
 ### No Database Changes
+
 - Vitals table schema unchanged
 - Predictions stored same way
 - Can rebuild app anytime
@@ -211,16 +224,19 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ## Performance Impact
 
 **Preprocessing Time**:
+
 - Old: 3-stage ensemble (~5ms)
 - New: Direct StandardScaler (~1ms)
 - **Improvement: 4x faster**
 
 **Model Size**:
+
 - Old: finalmodel.tflite
 - New: finalmodel_improved.tflite (~same size)
 - **TFLite optimizations applied**
 
 **Inference Time**:
+
 - Unchanged (same Keras architecture)
 - ~10-20ms on typical Android device
 
@@ -229,12 +245,14 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ## Debugging
 
 ### If Prediction Fails
+
 1. Check `finalmodel_improved.tflite` exists in assets
 2. Check logcat: `TFLitePrediction` logs
 3. Verify input features are valid (not NaN)
 4. Check StandardScaler means/stds are correct
 
 ### If Predictions Don't Match Backend
+
 1. Verify 10 features in same order
 2. Check StandardScaler parameters in code
 3. Compare raw input values before scaling
@@ -271,4 +289,3 @@ val inputforMlModel = ImprovedDataStandardization(input)
 ✅ **Consistent with backend online predictions**  
 ✅ **Simplified preprocessing code**  
 ✅ **Ready for production rebuild and deployment**
-

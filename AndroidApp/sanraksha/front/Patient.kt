@@ -14,5 +14,7 @@ data class Patient(
     @ColumnInfo(name = "patient-week")
     val pregnancyWeek : Int = 0,
     @ColumnInfo(name = "last-Checkup-date")
-    val lastCheckup : String = ""
+    val lastCheckup : String = "",
+    @ColumnInfo(name = "patient-state")
+    val state: String = ""
 )

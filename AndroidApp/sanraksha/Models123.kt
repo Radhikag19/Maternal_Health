@@ -126,36 +126,36 @@ fun ImprovedDataStandardization(riskInput: riskInput): FloatArray {
     
     // StandardScaler parameters (mean and std from training)
     val means = floatArrayOf(
-        27.635692f,  // Age
-        116.880676f, // Systolic BP
-        77.0f,       // Diastolic
-        7.555998f,   // BS
-        23.451214f,  // BMI
-        0.173178f,   // Previous Complications
-        0.289335f,   // Preexisting Diabetes
-        0.117212f,   // Gestational Diabetes
-        0.334741f,   // Mental Health
-        75.617740f   // Heart Rate
+        27.629883f,  // Age
+        116.445313f, // Systolic BP
+        76.985352f,  // Diastolic
+        134.55f,     // BS (mg/dL)
+        23.32959f,   // BMI
+        0.170898f,   // Previous Complications
+        0.286133f,   // Preexisting Diabetes
+        0.117188f,   // Gestational Diabetes
+        0.333008f,   // Mental Health
+        75.84961f    // Heart Rate
     )
     
     val stds = floatArrayOf(
-        9.287461f,   // Age
-        18.600834f,  // Systolic BP
-        14.233755f,  // Diastolic
-        3.112228f,   // BS
-        3.886886f,   // BMI
-        0.378401f,   // Previous Complications
-        0.453454f,   // Preexisting Diabetes
-        0.321673f,   // Gestational Diabetes
-        0.471900f,   // Mental Health
-        7.234759f    // Heart Rate
+        9.335057f,   // Age
+        18.529615f,  // Systolic BP
+        14.310821f,  // Diastolic
+        54.06805f,   // BS (mg/dL)
+        3.860251f,   // BMI
+        0.376420f,   // Previous Complications
+        0.451952f,   // Preexisting Diabetes
+        0.321644f,   // Gestational Diabetes
+        0.471289f,   // Mental Health
+        7.199368f    // Heart Rate
     )
     
     // Create raw feature vector (10 features)
     val rawFeatures = floatArrayOf(
         riskInput.Age.toFloat(),
-        riskInput.Systolic_BP,
-        riskInput.Diastolic,
+        riskInput.Systolic_BP.toFloat(),
+        riskInput.Diastolic.toFloat(),
         riskInput.BS,
         riskInput.BMI,
         riskInput.Previous_Complications.toFloat(),

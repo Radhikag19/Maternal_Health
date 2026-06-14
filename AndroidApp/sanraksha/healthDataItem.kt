@@ -13,6 +13,7 @@ data class healthDataItem(
           val Preexisting_Diabetes: Int? = null,
           val Gestational_Diabetes: Int? = null,
           val Mental_Health: Int? = null,
-          val Heart_Rate: Float? = null
+          val Heart_Rate: Float? = null,
+          val state: String? = null
 )
 

@@ -34,12 +34,13 @@ fun Navigation(
         }
 
         composable(Screens.AddPatient.route) {
-            AddPatientScreen(onSaveClick = {name,week,date ->
+            AddPatientScreen(onSaveClick = {name,week,date,state ->
                 viewModel.addPatient(
                     Patient(
                         name = name,
                         pregnancyWeek = week,
-                        lastCheckup = date
+                        lastCheckup = date,
+                        state = state
                     )
                 )
                 navController.popBackStack()

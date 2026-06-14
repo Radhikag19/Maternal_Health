@@ -29,6 +29,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +50,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPatientScreen(
-    onSaveClick:(String,Int,String)->Unit,
+    onSaveClick:(String,Int,String,String)->Unit,
     onBackClick:()->Unit
 ){
     var name by remember {mutableStateOf("")}
     var week by remember {mutableStateOf("")}
     var lastCheckupDate by remember {mutableStateOf("")}
+    var state by remember {mutableStateOf<String?>(null)}
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
@@ -133,16 +138,19 @@ fun AddPatientScreen(
                 shape = RoundedCornerShape(12.dp)
             )
 
+            Text("State", style = MaterialTheme.typography.labelLarge)
+            AddPatientStateDropdown(state) { state = it }
+
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = {
-                    if (name.isNotBlank() && week.isNotBlank() && lastCheckupDate.isNotBlank()) {
-                        onSaveClick(name, week.toIntOrNull() ?: 0, lastCheckupDate)
+                    if (name.isNotBlank() && week.isNotBlank() && lastCheckupDate.isNotBlank() && state != null) {
+                        onSaveClick(name, week.toIntOrNull() ?: 0, lastCheckupDate, state ?: "")
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = name.isNotBlank() && week.isNotBlank() && lastCheckupDate.isNotBlank(),
+                enabled = name.isNotBlank() && week.isNotBlank() && lastCheckupDate.isNotBlank() && state != null,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Save", style = MaterialTheme.typography.labelLarge)
@@ -152,4 +160,53 @@ fun AddPatientScreen(
 
     }
 
+}
+
+@Composable
+fun AddPatientStateDropdown(
+    selectedState: String?,
+    onStateChange: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val states = listOf(
+        "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+        "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+        "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+        "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+        "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+        "Uttar Pradesh", "Uttarakhand", "West Bengal"
+    ).sorted()
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedState ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Select State") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            states.forEach { stateName ->
+                DropdownMenuItem(
+                    text = { Text(stateName) },
+                    onClick = {
+                        onStateChange(stateName)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }

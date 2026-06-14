@@ -7,7 +7,7 @@ import retrofit2.create
 import java.util.concurrent.TimeUnit
 
 object retrofitInstance {
-    private const val BASE_URL = "https://sanraksha.onrender.com/"
+    private const val BASE_URL = "http://10.0.2.2:8000/"
 
 
 

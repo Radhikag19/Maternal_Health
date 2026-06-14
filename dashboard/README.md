@@ -129,14 +129,3 @@ To run the dashboard in a local environment, follow these steps:
 The application will be accessible via a local URL provided in the terminal.
 
 ---
-
-## 8. Future Enhancements
-
-The application is designed for extensibility. Potential future modules include:
-
--   **Authenticated Logins:** A secure login system for different user roles (e.g., Worker, Doctor, Administrator).
--   **Automated Alerting:** System-level notifications for when patient data exceeds critical clinical thresholds.
--   **Advanced Analytics:** Integration of more complex statistical models and time-series analysis.
-
----
-

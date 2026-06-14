@@ -18,6 +18,7 @@ Changes from original:
 """
 
 import os
+from pathlib import Path
 import requests
 import pandas as pd
 import streamlit as st
@@ -30,8 +31,12 @@ from datetime import datetime
 # In production, replace with your deployed FastAPI base URL.
 API_BASE = os.environ.get("SANRAKSHA_API", "http://localhost:8000")
 
-DATA_PATH         = "data/risk_cases.csv"
-ACK_PATH          = "data/acknowledged_cases.csv"   # local fallback for acks
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+
+DATA_PATH         = str(PROJECT_ROOT / "data" / "risk_cases.csv")
+CAPTURED_PATH     = str(PROJECT_ROOT / "data" / "captured_vitals.csv")
+ACK_PATH          = str(PROJECT_ROOT / "data" / "acknowledged_cases.csv")   # local fallback for acks
 
 # ── Hardcoded users for demo.  Replace with FastAPI /auth in production. ──────
 # Format: { "username": ("pin", "role") }
@@ -45,7 +50,7 @@ USERS = {
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="SanRaksha PHC Dashboard",
-    page_icon="https://raw.githubusercontent.com/sys6-exe/SanRaksha/main/assets/Sanraksha.png",
+    page_icon="./assets/Sanraksha.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -56,29 +61,34 @@ def load_css():
     st.markdown("""
     <style>
         .block-container { padding-top: 2rem; }
-        .stApp { background: linear-gradient(135deg, #141E30, #243B55); color: #E0E0E0; }
+        .stApp { background: linear-gradient(135deg, #F7FAFC, #EDF2F7); color: #1A202C; }
         .top-container { display: flex; align-items: center; margin-bottom: 2rem; }
         .logo { width: 75px; height: 75px; border-radius: 50%; margin-right: 20px; }
-        .title-text h1 { font-size: 3rem; font-weight: bold; color: white;
+        .title-text h1 { font-size: 3rem; font-weight: bold; color: #1A202C;
                          margin: 0; padding: 0; line-height: 1.1; }
-        [data-testid="stSidebar"] { background: rgba(20,30,48,0.6);
-                                    backdrop-filter: blur(10px); }
-        [data-testid="stMetric"] { background-color: rgba(255,255,255,0.08);
-                                   border: 1px solid rgba(255,255,255,0.15);
+        [data-testid="stSidebar"] { background: #FFFFFF;
+                                    backdrop-filter: none;
+                                    border-right: 1px solid #E2E8F0; }
+        [data-testid="stMetric"] { background-color: #FFFFFF;
+                                   border: 1px solid #E2E8F0;
                                    border-radius: 15px; padding: 25px; }
-        [data-testid="stMetric"] > label { color: #00E6E6; }
+        [data-testid="stMetric"] > label { color: #2B6CB0; }
         .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
-            color: white; background-color: rgba(0,230,230,0.2);
-            border-bottom: 3px solid #00E6E6; }
-        .section-title { font-size: 24px; font-weight: 600; color: white;
-                         margin-bottom: 20px; border-left: 5px solid #00E6E6;
+            color: #1A202C; background-color: rgba(43,108,176,0.12);
+            border-bottom: 3px solid #2B6CB0; }
+        .section-title { font-size: 24px; font-weight: 600; color: #1A202C;
+                         margin-bottom: 20px; border-left: 5px solid #2B6CB0;
                          padding-left: 15px; }
-        .ack-card { background: rgba(255,255,255,0.06); border-radius: 10px;
+        .ack-card { background: #FFFFFF; border-radius: 10px;
                     padding: 14px 18px; margin-bottom: 10px;
-                    border-left: 4px solid #FF4B4B; }
-        .ack-card.reviewed  { border-left-color: #00E6E6; }
-        .ack-card.referred  { border-left-color: #28a745; }
-        .ack-card.dismissed { border-left-color: #888; }
+                    border-left: 4px solid #E53E3E;
+                    border: 1px solid #E2E8F0; }
+        .ack-card.reviewed  { border-left-color: #2B6CB0; }
+        .ack-card.referred  { border-left-color: #38A169; }
+        .ack-card.dismissed { border-left-color: #718096; }
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stText"] { color: #1A202C; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -91,11 +101,55 @@ def load_data(path: str) -> pd.DataFrame:
     return df
 
 
+@st.cache_data(ttl=30)
+def load_captured_data(path: str) -> pd.DataFrame:
+    if not os.path.exists(path):
+        return pd.DataFrame()
+
+    df = pd.read_csv(path)
+    if "captured_at" in df.columns:
+        df["captured_at"] = pd.to_datetime(df["captured_at"], errors="coerce")
+    return df
+
+
 def load_ack() -> pd.DataFrame:
     """Load acknowledgment log — local CSV fallback."""
     if os.path.exists(ACK_PATH):
         return pd.read_csv(ACK_PATH)
     return pd.DataFrame(columns=["case_id", "status", "doctor", "ack_time"])
+
+
+def transform_captured_data(captured_df: pd.DataFrame) -> pd.DataFrame:
+    """Transform captured app vitals to match dashboard schema."""
+    if captured_df.empty:
+        return pd.DataFrame()
+    
+    df = captured_df.copy()
+    df["id"] = range(1, len(df) + 1)
+    
+    # Map prediction to risk_level (0=low, 1=high)
+    df["risk_level"] = df["prediction"].apply(lambda x: "high" if x == 1 else "low")
+    
+    # Rename fields to match dashboard schema
+    df["systolic_bp"] = df["Systolic_BP"]
+    df["diastolic_bp"] = df["Diastolic"]
+    df["blood_sugar"] = df["BS"]
+    df["bmi"] = df["BMI"]
+    df["timestamp"] = df["captured_at"]
+    
+    # Handle state field (may not exist in old CSV files)
+    if "state" in df.columns:
+        df["state"] = df["state"].fillna("Unknown")
+    else:
+        df["state"] = "Unknown"  # Default for old submissions without state
+    
+    # Add mock coordinates (can be replaced with real GPS later)
+    df["latitude"] = 26.8 + (df.index * 0.01)
+    df["longitude"] = 80.9 + (df.index * 0.01)
+    
+    # Keep only dashboard schema columns
+    return df[["id", "risk_level", "state", "latitude", "longitude", "timestamp", 
+               "systolic_bp", "diastolic_bp", "blood_sugar", "bmi"]]
 
 
 def save_ack(case_id: str, status: str, doctor: str):
@@ -146,7 +200,7 @@ def login_screen():
         """
         <div style='display:flex;flex-direction:column;align-items:center;
                     margin-top:80px;'>
-            <img src='https://raw.githubusercontent.com/sys6-exe/SanRaksha/main/assets/Sanraksha.png'
+            <img src='./assets/Sanraksha.png'
                  style='width:90px;border-radius:50%;margin-bottom:20px;'/>
             <h2 style='color:white;margin-bottom:4px;'>SanRaksha PHC Dashboard</h2>
             <p style='color:#aaa;'>Sign in to continue</p>
@@ -275,7 +329,15 @@ def main():
     user = st.session_state["user"]
     role = st.session_state["role"]
 
-    df = load_data(DATA_PATH)
+    # Load only real app submissions
+    captured_df = load_captured_data(CAPTURED_PATH)
+    df = transform_captured_data(captured_df)
+
+    # Show welcome message if no data yet
+    if df.empty:
+        st.warning("📊 No app submissions yet. Dashboard will populate as patients submit vitals from the SanRaksha app.")
+        st.info("To test, submit vitals from the Android app while the backend server is running.")
+        return
 
     # Role-based data filter: ASHA workers see only their own patients
     if role == "asha" and "asha_id" in df.columns:
@@ -309,7 +371,7 @@ def main():
         """
         <div class="top-container">
             <img class="logo"
-                 src="https://raw.githubusercontent.com/sys6-exe/SanRaksha/main/assets/Sanraksha.png"/>
+                 src="./assets/Sanraksha.png"/>
             <div class="title-text"><h1>SanRaksha PHC Dashboard</h1></div>
         </div>
         """,
@@ -367,6 +429,33 @@ def main():
                     icon=folium.Icon(color=color, icon="heart", prefix="fa"),
                 ).add_to(m)
             folium_static(m, width=None, height=450)
+
+        st.write("---")
+        st.markdown("<p class='section-title'>Captured App Submissions</p>",
+                    unsafe_allow_html=True)
+
+        col1, col2 = st.columns([4, 1])
+        with col2:
+            if st.button("🔄 Refresh", key="refresh_captured"):
+                st.cache_data.clear()
+                st.rerun()
+
+        captured_df = load_captured_data(CAPTURED_PATH)
+        if captured_df.empty:
+            st.info("No submissions have been captured from the app yet.")
+        else:
+            display_cols = [
+                col for col in [
+                    "captured_at", "Age", "Systolic_BP", "Diastolic", "BS", "Body_Temp",
+                    "BMI", "Previous_Complications", "Preexisting_Diabetes",
+                    "Gestational_Diabetes", "Mental_Health", "Heart_Rate",
+                    "prediction", "prediction_label", "source"
+                ] if col in captured_df.columns
+            ]
+            preview_df = captured_df[display_cols].copy() if display_cols else captured_df.copy()
+            if "captured_at" in preview_df.columns:
+                preview_df = preview_df.sort_values("captured_at", ascending=False)
+            st.dataframe(preview_df.head(20), use_container_width=True)
 
     # ── Tab 2: State analysis (original logic preserved) ──────────────────────
     with tab_objects[1]:

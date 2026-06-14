@@ -1,6 +1,8 @@
 package com.example.sanraksha.front
 
 import android.app.DatePickerDialog
+import android.content.Intent
+import android.speech.RecognizerIntent
 import android.util.Log
 import android.widget.DatePicker
 import android.widget.Toast
@@ -29,6 +31,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
@@ -44,6 +48,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,11 +70,12 @@ import androidx.room.util.splitToIntList
 import com.example.sanraksha.AndroidConnectivityObserver
 import com.example.sanraksha.ApiPredictionResult
 import com.example.sanraksha.ConnectivityVIewModel
-import com.example.sanraksha.DataStandardization
 import com.example.sanraksha.HealthViewModel
+import com.example.sanraksha.ImprovedDataStandardization
 import com.example.sanraksha.R
 import com.example.sanraksha.RiskPredictor
 import com.example.sanraksha.healthDataItem
+import com.example.sanraksha.parseVoiceTranscript
 import com.example.sanraksha.riskInput
 import com.example.sanraksha.ui.theme.ConnectivityViewModelFactory
 import java.text.SimpleDateFormat
@@ -105,6 +112,8 @@ fun RecordVitalsScreen(
     var bodyTemp by remember { mutableStateOf("") }
     var bmi by remember { mutableStateOf("") }
     var heartRate by remember { mutableStateOf("") }
+    var transcript by remember { mutableStateOf("") }
+    var transcriptStatus by remember { mutableStateOf("Speak or paste a transcript to auto-fill fields") }
 
     var previousComplications by remember { mutableStateOf<Int?>(null) }
     var preexistingDiabetes by remember { mutableStateOf<Int?>(null) }
@@ -125,6 +134,49 @@ fun RecordVitalsScreen(
             },
             year, month, day
         )
+    }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val spokenText = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+                .orEmpty()
+
+            if (spokenText.isNotBlank()) {
+                transcript = spokenText
+                transcriptStatus = "Transcript captured. Use auto-fill to populate fields."
+            } else {
+                transcriptStatus = "No speech recognized. Try again."
+            }
+        } else {
+            transcriptStatus = "Speech capture cancelled."
+        }
+    }
+
+    fun applyTranscriptToFields() {
+        if (transcript.isBlank()) {
+            transcriptStatus = "Enter or record a transcript first."
+            return
+        }
+
+        val parsed = parseVoiceTranscript(transcript)
+
+        parsed.age?.let { age = it.toString() }
+        parsed.systolicBp?.let { systolicBP = it.toString() }
+        parsed.diastolicBp?.let { diastolic = it.toString() }
+        parsed.bloodSugar?.let { bs = it.toString() }
+        parsed.bmi?.let { bmi = it.toString() }
+        parsed.bodyTemp?.let { bodyTemp = it.toString() }
+        parsed.heartRate?.let { heartRate = it.toString() }
+        parsed.previousComplications?.let { previousComplications = it }
+        parsed.preexistingDiabetes?.let { preexistingDiabetes = it }
+        parsed.gestationalDiabetes?.let { gestationalDiabetes = it }
+        parsed.mentalHealth?.let { mentalHealth = it }
+
+        transcriptStatus = "Auto-filled fields from transcript. Review the form before saving."
     }
 
     Scaffold(
@@ -217,6 +269,43 @@ fun RecordVitalsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
                 )
+            Spacer(modifier = Modifier.height(4.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors()
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Voice Note / Transcript", style = MaterialTheme.typography.labelLarge)
+                    Text(
+                        "Use speech-to-text or paste a transcript. The app can extract BP, sugar, BMI, heart rate, age, and yes/no risk flags.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = transcript,
+                        onValueChange = { transcript = it },
+                        placeholder = { Text("Example: age 30, blood pressure 120 over 80, sugar 6.5, BMI 25, heart rate 75") },
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Text(transcriptStatus, style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak the vitals for this patient")
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+                            }
+                            speechLauncher.launch(intent)
+                        }) {
+                            Text("Speak")
+                        }
+
+                        Button(onClick = { applyTranscriptToFields() }) {
+                            Text("Auto-fill")
+                        }
+                    }
+                }
+            }
             Dropdown("Previous Complications", previousComplications) { previousComplications = it }
             Dropdown("Preexisting Diabetes", preexistingDiabetes) { preexistingDiabetes = it }
             Dropdown("Gestational Diabetes", gestationalDiabetes) { gestationalDiabetes = it }
@@ -226,7 +315,8 @@ fun RecordVitalsScreen(
 
             Button(
                 onClick = {
-                    if(isConnected){
+                    Log.d("PRED_DEBUG", "Save clicked - isConnected = $isConnected")
+                    if (isConnected) {
                         //call api
                         val input = healthDataItem(
                             Age = age.toFloatOrNull()?.toInt()?:0,
@@ -239,7 +329,8 @@ fun RecordVitalsScreen(
                             Preexisting_Diabetes = preexistingDiabetes ?: 0,
                             Gestational_Diabetes = gestationalDiabetes ?: 0,
                             Mental_Health = mentalHealth ?: 0,
-                            Heart_Rate = heartRate.toFloatOrNull()
+                            Heart_Rate = heartRate.toFloatOrNull(),
+                            state = patient?.state
 
                         )
                         healthViewModel.sendHealthDataToApi(input){result: ApiPredictionResult?->
@@ -286,7 +377,7 @@ fun RecordVitalsScreen(
                             }
 
                         }
-                    }else{
+                    } else {
                         //else ml model
                         val input = riskInput(
                             Age = age.toFloatOrNull()?.toInt()?:0,
@@ -303,12 +394,18 @@ fun RecordVitalsScreen(
                         )
                         // Use improved model (98.73% accuracy)
                         val inputforMlModel = ImprovedDataStandardization(input)
+                        Log.d("PRED_DEBUG", "TFLite input vector: ${inputforMlModel.joinToString()}")
                         val predictor = RiskPredictor(context)
-                        val prediction = predictor.predict(inputforMlModel)
+                        val prediction = try {
+                            predictor.predict(inputforMlModel)
+                        } catch (e: Exception) {
+                            Log.e("PRED_DEBUG", "TFLite prediction failed", e)
+                            Float.NaN
+                        }
                         val intPrediction = if(prediction > 0.5f)1 else 0
 
-                     Log.d("TFLitePrediction","Predicted Risk Score : $prediction")
-                    Log.d("TFLitePredictioninINt","Predicted  Score : $intPrediction")
+                        Log.d("TFLitePrediction", "Predicted Risk Score : $prediction")
+                        Log.d("TFLitePredictioninINt", "Predicted  Score : $intPrediction")
                         val vitals = Vitals(
                             patientId = patientId,
                             date = date,

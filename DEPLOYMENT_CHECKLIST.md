@@ -8,15 +8,15 @@
 
 ## Quick Status
 
-| Component | Status | Ready? |
-|-----------|--------|--------|
-| Backend (FastAPI) | ✅ Updated & tested | ✅ YES |
-| Android code | ✅ Updated | ✅ YES |
-| Model artifacts | ✅ Generated | ✅ YES |
-| Documentation | ✅ Complete | ✅ YES |
-| Git commits | ✅ Pushed | ✅ YES |
-| **Android rebuild** | ⏳ Awaiting manual | ❌ TODO |
-| **Online deployment** | ⏳ Awaiting manual | ❌ TODO |
+| Component             | Status              | Ready?  |
+| --------------------- | ------------------- | ------- |
+| Backend (FastAPI)     | ✅ Updated & tested | ✅ YES  |
+| Android code          | ✅ Updated          | ✅ YES  |
+| Model artifacts       | ✅ Generated        | ✅ YES  |
+| Documentation         | ✅ Complete         | ✅ YES  |
+| Git commits           | ✅ Pushed           | ✅ YES  |
+| **Android rebuild**   | ⏳ Awaiting manual  | ❌ TODO |
+| **Online deployment** | ⏳ Awaiting manual  | ❌ TODO |
 
 ---
 
@@ -35,6 +35,7 @@ python app/train_improved_model.py
 This will generate: `AndroidApp/sanraksha/assets/finalmodel_improved.tflite`
 
 **Alternative** (if already exists):
+
 ```bash
 # Check if file exists
 dir AndroidApp\sanraksha\assets\finalmodel_improved.tflite
@@ -47,12 +48,14 @@ dir AndroidApp\sanraksha\assets\finalmodel_improved.tflite
 ### STEP 2: Rebuild Android App
 
 **In Android Studio**:
+
 1. Open project: `AndroidApp/sanraksha/`
 2. Click: Build → Rebuild Project
 3. Wait for: "Build successful"
 4. Verify: No red errors in logcat
 
 **Command line** (if using gradle):
+
 ```bash
 cd AndroidApp/sanraksha
 ./gradlew clean build
@@ -65,11 +68,13 @@ cd AndroidApp/sanraksha
 ### STEP 3: Test Offline Prediction on Device/Emulator
 
 **Setup**:
+
 1. Deploy app to Android emulator or device
 2. Open SanRaksha app
 3. Turn OFF WiFi/Bluetooth (force offline mode)
 
 **Test Case 1** - Low Risk:
+
 ```
 Age: 30
 Systolic BP: 120
@@ -86,6 +91,7 @@ Expected Result: "Low Risk"
 ```
 
 **Test Case 2** - High Risk:
+
 ```
 Age: 45
 Systolic BP: 160
@@ -102,6 +108,7 @@ Expected Result: "High Risk"
 ```
 
 **Check Logs**:
+
 ```bash
 # In Android Studio logcat, filter for "TFLitePrediction"
 # Should see: "TFLitePrediction: Predicted Risk Score: [0-1]"
@@ -117,12 +124,14 @@ Expected Result: "High Risk"
 **Turn ON WiFi**, then:
 
 **Backend Test - Local**:
+
 ```bash
 cd app
 python -m uvicorn main:app --reload --port 8000
 ```
 
 Then in another terminal:
+
 ```bash
 curl -X POST "http://localhost:8000/predict" \
   -H "Content-Type: application/json" \
@@ -141,6 +150,7 @@ curl -X POST "http://localhost:8000/predict" \
 ```
 
 **Expected Response**:
+
 ```json
 {
   "prediction": [0],
@@ -157,6 +167,7 @@ curl -X POST "http://localhost:8000/predict" \
 **Same patient data, both modes**:
 
 Use Test Case 1 (Low Risk) from STEP 3:
+
 1. **Offline**: Enter vitals in Android app → Should show "Low Risk"
 2. **Online**: Call backend /predict with same data → Should show "Low Risk"
 3. **Verify**: Both say exactly the same prediction
@@ -172,6 +183,7 @@ Use Test Case 1 (Low Risk) from STEP 3:
 **Current status**: Code updated, not yet redeployed
 
 **To redeploy**:
+
 1. Push code to GitHub (✅ Already done)
 2. Go to Render dashboard: https://dashboard.render.com
 3. Select your backend service
@@ -179,6 +191,7 @@ Use Test Case 1 (Low Risk) from STEP 3:
 5. Check Deploy Logs: Should load `keras_model_improved.keras`
 
 **Verify**:
+
 ```bash
 # Test Render endpoint
 curl -X POST "https://your-render-app.onrender.com/predict" \
@@ -197,6 +210,7 @@ curl -X POST "https://your-render-app.onrender.com/predict" \
 **Current status**: Code updated, not yet released
 
 **Steps**:
+
 1. Rebuild app in Android Studio (STEP 2)
 2. Generate release APK/AAB
 3. Upload to Play Store internal testing or TestFlight
@@ -210,6 +224,7 @@ curl -X POST "https://your-render-app.onrender.com/predict" \
 ### Problem: "Cannot find finalmodel_improved.tflite"
 
 **Fix**:
+
 ```bash
 # Regenerate it
 cd app
@@ -222,11 +237,13 @@ copy app\finalmodel_improved.tflite AndroidApp\sanraksha\assets\
 ### Problem: Android app crashes on offline prediction
 
 **Check**:
+
 1. Is `finalmodel_improved.tflite` in assets folder? (check in Android Studio)
 2. Is app rebuilt after copying? (clean build)
 3. Check logcat for errors: `Filter by "TFLitePrediction"` or `"LoadingTensorFlowLite"`
 
 **Fix**:
+
 ```bash
 # Clean rebuild
 cd AndroidApp/sanraksha
@@ -236,11 +253,13 @@ cd AndroidApp/sanraksha
 ### Problem: Offline prediction works but returns wrong result
 
 **Check**:
+
 1. Feature order matches: [Age, SystolicBP, Diastolic, BS, BMI, CompFlag, PreDiabetes, GestDiabetes, MentalHealth, HR]
 2. StandardScaler parameters correct (in Models123.kt)
 3. Test data is valid (not NaN)
 
 **Fix**: Manually verify ImprovedDataStandardization() in Models123.kt matches:
+
 ```
 means: [27.636, 116.881, 77.0, 7.556, 23.451, 0.173, 0.289, 0.117, 0.335, 75.618]
 stds:  [9.287, 18.601, 14.234, 3.112, 3.887, 0.378, 0.453, 0.322, 0.472, 7.235]
@@ -249,12 +268,14 @@ stds:  [9.287, 18.601, 14.234, 3.112, 3.887, 0.378, 0.453, 0.322, 0.472, 7.235]
 ### Problem: Online and offline predictions don't match
 
 **Check**:
+
 1. Same input data on both sides? (verify all 10 fields)
 2. Same feature order? (see STEP 4 curl command and STEP 3 form)
-3. Backend redeployed with new model? 
+3. Backend redeployed with new model?
 4. Android rebuilt with new TFLite?
 
 **Fix**:
+
 ```bash
 # Verify backend is using improved model
 curl "https://your-render-app.onrender.com/predict" ...
@@ -281,27 +302,27 @@ curl "https://your-render-app.onrender.com/predict" ...
 
 ## Documentation Reference
 
-| Document | Purpose | Location |
-|-----------|---------|----------|
-| **PROJECT_COMPLETION_SUMMARY.md** | Complete overview of improvements | Root folder |
-| **IMPROVED_MODEL_DEPLOYMENT.md** | Backend technical details | Root folder |
-| **ANDROID_IMPROVEMENTS.md** | Android integration guide | Root folder |
-| **app/main.py** | Backend code (improved) | app/main.py |
-| **Models123.kt** | Android preprocessing | AndroidApp/sanraksha/Models123.kt |
-| **LoadingTensorFlowLite.kt** | Model loading | AndroidApp/sanraksha/LoadingTensorFlowLite.kt |
+| Document                          | Purpose                           | Location                                      |
+| --------------------------------- | --------------------------------- | --------------------------------------------- |
+| **PROJECT_COMPLETION_SUMMARY.md** | Complete overview of improvements | Root folder                                   |
+| **IMPROVED_MODEL_DEPLOYMENT.md**  | Backend technical details         | Root folder                                   |
+| **ANDROID_IMPROVEMENTS.md**       | Android integration guide         | Root folder                                   |
+| **app/main.py**                   | Backend code (improved)           | app/main.py                                   |
+| **Models123.kt**                  | Android preprocessing             | AndroidApp/sanraksha/Models123.kt             |
+| **LoadingTensorFlowLite.kt**      | Model loading                     | AndroidApp/sanraksha/LoadingTensorFlowLite.kt |
 
 ---
 
 ## Estimated Time to Complete
 
-| Step | Time | Difficulty |
-|------|------|-----------|
-| 1. Copy TFLite model | 5 min | Easy |
-| 2. Rebuild Android | 5-10 min | Easy |
-| 3. Test offline | 10 min | Easy |
-| 4. Test online | 5 min | Easy |
-| 5. Verify consistency | 5 min | Easy |
-| **Total** | **~30-40 min** | **Low** |
+| Step                  | Time           | Difficulty |
+| --------------------- | -------------- | ---------- |
+| 1. Copy TFLite model  | 5 min          | Easy       |
+| 2. Rebuild Android    | 5-10 min       | Easy       |
+| 3. Test offline       | 10 min         | Easy       |
+| 4. Test online        | 5 min          | Easy       |
+| 5. Verify consistency | 5 min          | Easy       |
+| **Total**             | **~30-40 min** | **Low**    |
 
 ---
 
@@ -329,10 +350,10 @@ All changes available at: https://github.com/akssri1317/prj3
 ---
 
 **Questions?** Refer to:
+
 - **Technical details**: IMPROVED_MODEL_DEPLOYMENT.md
 - **Android guide**: ANDROID_IMPROVEMENTS.md
 - **Project overview**: PROJECT_COMPLETION_SUMMARY.md
 - **Code changes**: Git commit history
 
 **Status**: ✅ Ready for deployment. Execute steps above to complete.
-

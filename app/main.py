@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Union
+from pathlib import Path
+from datetime import datetime
 import joblib
 import pandas as pd
 import numpy as np
@@ -44,9 +46,35 @@ class PatientParams(BaseModel):
     Gestational_Diabetes: int = None
     Mental_Health: int = None
     Heart_Rate: float = None
+    state: str = None
 
 
 app = FastAPI()
+
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+CAPTURED_VITALS_PATH = PROJECT_ROOT / "data" / "captured_vitals.csv"
+
+
+def append_captured_vitals(item: PatientParams, prediction: int, label: str) -> None:
+    """Persist a captured app submission so the dashboard can read it later."""
+    payload = item.model_dump() if hasattr(item, "model_dump") else item.dict()
+    row = {
+        **payload,
+        "prediction": prediction,
+        "prediction_label": label,
+        "captured_at": datetime.now().isoformat(),
+        "source": "android_app",
+    }
+
+    CAPTURED_VITALS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if CAPTURED_VITALS_PATH.exists():
+        existing = pd.read_csv(CAPTURED_VITALS_PATH)
+        updated = pd.concat([existing, pd.DataFrame([row])], ignore_index=True)
+    else:
+        updated = pd.DataFrame([row])
+
+    updated.to_csv(CAPTURED_VITALS_PATH, index=False)
 
 
 @app.get("/")
@@ -87,9 +115,12 @@ async def predict(data: Union[PatientParams, List[PatientParams]]):
         # Get prediction from improved Keras model
         prob = keras_model.predict(features_scaled, verbose=0)[0, 0]
         pred = 1 if prob > 0.5 else 0
+        label = RISK_LABELS.get(pred, "Unknown")
+
+        append_captured_vitals(item, pred, label)
         
         predictions.append(pred)
-        prediction_labels.append(RISK_LABELS.get(pred, "Unknown"))
+        prediction_labels.append(label)
     
     return {
         "prediction": predictions,
